@@ -20,8 +20,8 @@ class FLAGS:
 
     # flags for model
     NUM_CLASS  = 2
-    NUM_STRIDES= 5
-    BASE_NUM_OUTPUTS=16
+    NUM_STRIDE = 6
+    NUM_BASE_FILTER=64
     TRAIN      = False
     KVALUE     = 20
     DEBUG      = True
@@ -48,8 +48,12 @@ class FLAGS:
         self._create_parser()
 
     def _common_arguments(self,parser):
-        
-        parser.add_argument('-ld','--log_dir', default=self.LOG_DIR,
+
+        parser.add_argument('-ns','--num_stride',type=int,default=self.NUM_STRIDE,
+                            help='The stride depth of the network [default %d]' % self.NUM_STRIDE)
+        parser.add_argument('-nf','--num_base_filter',type=int,default=self.NUM_BASE_FILTER,
+                            help='The number of base filter count of the network [default %d]' % self.NUM_BASE_FILTER)
+        parser.add_argument('-ld','--log_dir', type=str,default=self.LOG_DIR,
                             help='Log dir [default: %s]' % self.LOG_DIR)
         parser.add_argument('--gpus', type=str, default=self.GPUS,
                             help='GPUs to utilize (comma-separated integers')
@@ -123,7 +127,6 @@ class FLAGS:
         torch.manual_seed(self.SEED)
         torch.cuda.manual_seed(self.SEED)
         np.random.seed(self.SEED)
-        args.func(self)
 
         if not os.path.isdir(self.LOG_DIR):
             os.makedirs(self.LOG_DIR)
@@ -131,7 +134,8 @@ class FLAGS:
             d = self.SAVE_WEIGHT[0:self.SAVE_WEIGHT.rfind('/')]
             if not os.path.isdir(d):
                 os.makedirs(d)
-                    
+        args.func(self)
+        
     def _update(self, args):
         for name,value in args.iteritems():
             if name in ['func','script']: continue

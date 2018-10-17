@@ -27,15 +27,15 @@ class trainval(object):
         
     def initialize(self):
         self._net = SparseUResNet(True,
-                                  num_strides=self._flags.NUM_STRIDES,
-                                  base_num_outputs=self._flags.BASE_NUM_OUTPUTS)
-        print(self._net)
+                                  num_strides=self._flags.NUM_STRIDE,
+                                  base_num_outputs=self._flags.NUM_BASE_FILTER)
+        #print(self._net)
         # Define loss and optimizer
         if self._flags.TRAIN:
             self._criterion = nn.CrossEntropyLoss()
             self._optimizer = optim.Adam(self._net.parameters(), lr=self._flags.LEARNING_RATE)
             self._lrop      = optim.lr_scheduler.StepLR(self._optimizer, 1000, gamma=0.1)
-            print(os.environ['CUDA_VISIBLE_DEVICES'])
+            #print(os.environ['CUDA_VISIBLE_DEVICES'])
             self._net.train().cuda()
         else:
             self._softmax = nn.LogSoftmax(dim=1)
