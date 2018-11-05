@@ -74,9 +74,9 @@ def train(flags):
         acc = compute_accuracy(io,idx,pred)
         
         tspent = time.time() - tstart
-        mem = torch.cuda.memory_allocated()
-        csv.record(('iter','titer','ttrain','tsave','mem','loss','acc'),
-                   (iteration,tspent,trainer.tspent_train,0.0,mem,loss,acc.mean()))
+        mem = torch.cuda.max_memory_cached()
+        csv.record(('iter','titer','ttrain','tsave','mem','npts','loss','acc'),
+                   (iteration,tspent,trainer.tspent_train,0.0,mem,len(voxel),loss,acc.mean()))
 
         loss_v [iteration % flags.REPORT_STEP] = loss
         acc_v  [iteration % flags.REPORT_STEP] = acc.mean()
@@ -84,7 +84,7 @@ def train(flags):
         if report_step:
             epoch = iteration * iteration_to_epoch
             msg = 'Iteration %d (epoch %g) ... Mem %g ... Loss/Acc = %g/%g'
-            msg = msg % (iteration,epoch,torch.cuda.memory_allocated(),loss_v.mean(),acc_v.mean())
+            msg = msg % (iteration,epoch,mem,loss_v.mean(),acc_v.mean())
             print(msg)
 
         if checkpt_step:
@@ -128,7 +128,7 @@ def inference(flags):
         acc,softmax = store_softmax(io,idx,softmax)
 
         tspent = time.time() - tstart
-        mem = torch.cuda.memory_allocated()
+        mem = torch.cuda.max_memory_cached()
         csv_batch.record(('iteration','titer','tinference','mem','acc'),
                          (iteration,tspent,trainer.tspent_inference,mem,acc_v.mean()))
 
