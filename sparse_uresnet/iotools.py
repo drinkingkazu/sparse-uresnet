@@ -142,14 +142,29 @@ class io_larcv(io_base):
         # configure the input
         from larcv import larcv
         from ROOT import TChain
-        ch_data   = TChain('sparse3d_%s_tree' % self._flags.DATA_KEY)
+        # set 2d vs. 3d functions
+        as_numpy_array = None
+        dtype_keyword  = ''
+        if self._flags.DATA_DIM == 3:
+            as_numpy_voxels = larcv.fill_3d_voxels
+            as_numpy_pcloud = larcv.fill_3d_pcloud
+            dtype_keyword   = 'sparse3d'
+        elif self._flags.DATA_DIM == 2:
+            as_numpy_voxels = larcv.fill_2d_voxels
+            as_numpy_pcloud = larcv.fill_2d_pcloud
+            dtype_keyword   = 'sparse2d'
+        else:
+            print('larcv IO not implemented for data dimension',self._flags.DATA_DIM)
+            raise NotImplementedError
+        
+        ch_data   = TChain('%s_%s_tree' % (dtype_keyword,self._flags.DATA_KEY))
         ch_label  = None
         if self._flags.LABEL_KEY:
-            ch_label  = TChain('sparse3d_%s_tree' % self._flags.LABEL_KEY)
+            ch_label  = TChain('%s_%s_tree' % (dtype_keyword,self._flags.LABEL_KEY))
         for f in self._flags.INPUT_FILE:
             ch_data.AddFile(f)
             if ch_label:  ch_label.AddFile(f)
-        
+            
         self._voxel   = []
         self._feature = []
         self._label   = []
@@ -160,24 +175,37 @@ class io_larcv(io_base):
             ch_data.GetEntry(i)
             if ch_label:  ch_label.GetEntry(i)
             if br_data is None:
-                br_data  = getattr(ch_data, 'sparse3d_%s_branch' % self._flags.DATA_KEY)
-                if ch_label:  br_label  = getattr(ch_label, 'sparse3d_%s_branch' % self._flags.LABEL_KEY)
-            num_point = br_data.as_vector().size()
-            if num_point < 256: continue
+                br_data  = getattr(ch_data, '%s_%s_branch' % (dtype_keyword,self._flags.DATA_KEY))
+                if ch_label:  br_label  = getattr(ch_label, '%s_%s_branch' % (dtype_keyword,self._flags.LABEL_KEY))
 
-            np_voxel   = np.zeros(shape=(num_point,3),dtype=np.int32)
-            larcv.fill_3d_voxels(br_data, np_voxel)
+            # HACK that should go away when unifying 2d and 3d data reps...
+            data_tensor = br_data
+            label_tensor = br_label
+            if self._flags.DATA_DIM == 2:
+                data_tensor = br_data.as_vector().front()
+                label_tensor = br_label.as_vector().front()
+
+            num_point = data_tensor.as_vector().size()            
+            if num_point < 10: continue
+
+            self._event_keys.append((br_data.run(),br_data.subrun(),br_data.event()))
+            # HACK that should go away when unifying 2d and 3d data reps...
+            if self._flags.DATA_DIM == 2:
+                self._metas.append(larcv.ImageMeta(label_tensor.meta()))
+            else:
+                self._metas.append(larcv.Voxel3DMeta(br_data.meta()))
+                
+            np_voxel   = np.zeros(shape=(num_point,self._flags.DATA_DIM),dtype=np.int32)
+            as_numpy_voxels(data_tensor, np_voxel)
             self._voxel.append(np_voxel)
             
             np_feature = np.zeros(shape=(num_point,1),dtype=np.float32)
-            larcv.fill_3d_pcloud(br_data,  np_feature)
+            as_numpy_pcloud(data_tensor,  np_feature)
             self._feature.append(np_feature)
-            
-            self._event_keys.append((br_data.run(),br_data.subrun(),br_data.event()))
-            self._metas.append(larcv.Voxel3DMeta(br_data.meta()))
+
             if ch_label:
                 np_label = np.zeros(shape=(num_point,1),dtype=np.float32)
-                larcv.fill_3d_pcloud(br_label, np_label)
+                as_numpy_pcloud(label_tensor, np_label)
                 np_label = np_label.reshape([num_point]) - 1.
                 self._label.append(np_label)
             total_point += num_point

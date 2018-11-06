@@ -26,9 +26,11 @@ class trainval(object):
         self.tspent_inference = -1.
         
     def initialize(self):
-        self._net = SparseUResNet(True,
+        self._net = SparseUResNet(dimension=self._flags.DATA_DIM,
                                   num_strides=self._flags.NUM_STRIDE,
-                                  base_num_outputs=self._flags.NUM_BASE_FILTER)
+                                  base_num_outputs=self._flags.NUM_BASE_FILTER,
+                                  num_classes=self._flags.NUM_CLASS,
+                                  spatialSize=self._flags.IMAGE_SIZE)
         #print(self._net)
         # Define loss and optimizer
         if self._flags.TRAIN:

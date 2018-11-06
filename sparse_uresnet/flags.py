@@ -12,9 +12,11 @@ class FLAGS:
     IO_TYPE     = 'larcv'
     INPUT_FILE  = '/gpfs/slac/staas/fs1/g/neutrino/kterao/data/dlprod_ppn_v08_p02_test.root'
     OUTPUT_FILE = ''
+    DATA_DIM    = 3
     BATCH_SIZE  = 10
     DATA_KEY    = 'data'
     LABEL_KEY   = 'segment'
+    IMAGE_SIZE  = 512
     SHUFFLE     = 1
     NUM_THREADS = 1
 
@@ -51,6 +53,8 @@ class FLAGS:
 
         parser.add_argument('-ns','--num_stride',type=int,default=self.NUM_STRIDE,
                             help='The stride depth of the network [default %d]' % self.NUM_STRIDE)
+        parser.add_argument('-nc','--num_class',type=int,default=self.NUM_CLASS,
+                            help='The number of classes [default %d]' % self.NUM_CLASS)
         parser.add_argument('-nf','--num_base_filter',type=int,default=self.NUM_BASE_FILTER,
                             help='The number of base filter count of the network [default %d]' % self.NUM_BASE_FILTER)
         parser.add_argument('-ld','--log_dir', type=str,default=self.LOG_DIR,
@@ -68,6 +72,10 @@ class FLAGS:
         ### IO ###
         parser.add_argument('-io','--io_type',type=str,default=self.IO_TYPE,
                             help='IO handler type [default: %s]' % self.IO_TYPE)
+        parser.add_argument('-dd','--data_dim',type=int,default=self.DATA_DIM,
+                            help='Input data dimension [default: %s]' % self.DATA_DIM)
+        parser.add_argument('-is','--image_size',type=int,default=self.IMAGE_SIZE,
+                            help='Image size [default: %s]' % self.IMAGE_SIZE)
         parser.add_argument('-if','--input_file',type=str,default=self.INPUT_FILE,
                             help='comma-separated input file list [default: %s]' % self.INPUT_FILE)
         parser.add_argument('-of','--output_file',type=str,default=self.OUTPUT_FILE,

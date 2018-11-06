@@ -11,9 +11,8 @@ torch.backends.cudnn.benchmark = True
 
 
 class SparseUResNet(nn.Module):
-    def __init__(self, is_3d, num_strides=3, base_num_outputs=16, num_classes=2, spatialSize=512):
+    def __init__(self, dimension, num_strides=3, base_num_outputs=16, num_classes=2, spatialSize=512):
         nn.Module.__init__(self)
-        dimension = 3 if is_3d else 2
         reps = 2  # Conv block repetition factor
         kernel_size = 2  # Use input_spatial_size method for other values?
         m = base_num_outputs  # Unet number of features
