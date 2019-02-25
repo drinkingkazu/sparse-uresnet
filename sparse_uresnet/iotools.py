@@ -172,6 +172,8 @@ class io_larcv(io_base):
         event_fraction = 1./ch_data.GetEntries() * 100.
         total_point = 0.
         for i in range(ch_data.GetEntries()):
+            if self._flags.LIMIT_NUM_SAMPLE > 0 and i > self._flags.LIMIT_NUM_SAMPLE:
+                break
             ch_data.GetEntry(i)
             if ch_label:  ch_label.GetEntry(i)
             if br_data is None:
@@ -206,7 +208,7 @@ class io_larcv(io_base):
             if ch_label:
                 np_label = np.zeros(shape=(num_point,1),dtype=np.float32)
                 as_numpy_pcloud(label_tensor, np_label)
-                np_label = np_label.reshape([num_point]) - 1.
+                np_label = np_label.reshape([num_point])# - 1.
                 self._label.append(np_label)
             total_point += num_point
             sys.stdout.write('Processed %d%% ... %d MB\r' % (int(event_fraction*i),int(total_point*4*2/1.e6)))
